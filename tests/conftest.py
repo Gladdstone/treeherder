@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import platform
+import shutil
 
 import kombu
 import pytest
@@ -10,6 +11,7 @@ import responses
 from _pytest.monkeypatch import MonkeyPatch
 from django.conf import settings
 from rest_framework.test import APIClient
+import adr
 
 from treeherder.autoclassify.autoclassify import mark_best_classification
 from treeherder.etl.jobs import store_job_data
@@ -787,3 +789,18 @@ def backfill_record_context():
             },
         ]
     }
+
+
+@pytest.fixture
+def cache():
+    # The directory is defined in tests/config.toml
+    # If you want to iterate fast on tests that use the cache you can temporarily
+    # comment out the steps deleting the cache
+    cache_path = "adr_tests_cache"
+    try:
+        if os.path.isdir(cache_path):
+            # Make sure we start from a clean slate
+            shutil.rmtree(cache_path)
+        yield adr.config.cache
+    finally:
+        shutil.rmtree(cache_path)

@@ -3,6 +3,7 @@ FROM python:3.7.2
 
 # Variables that are not specific to a particular environment.
 ENV NEW_RELIC_CONFIG_FILE newrelic.ini
+ENV ADR_CONFIG_PATH /app/docker/config.toml
 
 # libmysqlclient-dev and gcc are required for the mysqlclient Python package.
 # netcat is used for the MySQL readiness check in entrypoint.sh.

@@ -2,7 +2,11 @@
 verbose = 1
 
 [adr.cache]
-retention = 40320
+retention = 10080  # minutes
 
-[adr.cache.stores]
-file = { driver = "file", path = "/adr_cache" }
+[adr.cache.stores.file]
+driver = "seeded-file"
+path = "/adr_cache"
+url = "https://s3-us-west-2.amazonaws.com/communitytc-bugbug/data/adr_cache.tar.zst"
+archive_relpath = "data/adr_cache"
+reseed_interval = 10080
