@@ -3,7 +3,7 @@ import jsone from 'json-e';
 import { Auth, Hooks, slugid } from 'taskcluster-client-web';
 import { satisfiesExpression } from 'taskcluster-lib-scopes';
 
-import taskcluster, { tcCredentialsMessage } from '../helpers/taskcluster';
+import taskcluster from '../helpers/taskcluster';
 import { checkRootUrl } from '../taskcluster-auth-callback/constants';
 
 export default class TaskclusterModel {
@@ -58,9 +58,7 @@ export default class TaskclusterModel {
       const userCredentials = await (testMode
         ? taskcluster.getMockCredentials()
         : taskcluster.getCredentials(currentRepo.tc_root_url));
-      if (!userCredentials) {
-        throw new Error(tcCredentialsMessage);
-      }
+
       const hooks = new Hooks({
         rootUrl,
         credentials: userCredentials.credentials,

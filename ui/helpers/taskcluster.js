@@ -61,13 +61,15 @@ const taskcluster = (() => {
     }
   };
 
-  const getDebouncedAuthCode = debounce(getAuthCode, 500, {
+  // this is for situations where multiple retriggers are initiatied in rapid succession
+  // (it will call getAuthCode the first time and ignore subsequent calls within the specified time range
+  const getDebouncedAuthCode = debounce(getAuthCode, 1000, {
     leading: true,
     trailing: false,
   });
 
   const getCredentials = (rootUrl) =>
-    new Promise((resolve) => {
+    new Promise((resolve, reject) => {
       const userCredentials = JSON.parse(
         localStorage.getItem('userCredentials'),
       );
@@ -87,12 +89,10 @@ const taskcluster = (() => {
           localStorage.getItem('userCredentials'),
         );
 
-        return resolve(
-          userCredentials && userCredentials[_rootUrl]
-            ? userCredentials[_rootUrl]
-            : null,
-        );
-      }, 5000);
+        return userCredentials && userCredentials[_rootUrl]
+          ? resolve(userCredentials[_rootUrl])
+          : reject(new Error(tcCredentialsMessage));
+      }, 4000);
     });
 
   const getMockCredentials = () =>
@@ -105,10 +105,6 @@ const taskcluster = (() => {
     const userCredentials = await (testMode
       ? getMockCredentials()
       : getCredentials(rootUrl));
-
-    if (!userCredentials) {
-      throw Error(tcCredentialsMessage);
-    }
 
     return new Queue({
       rootUrl,
