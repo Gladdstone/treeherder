@@ -1,6 +1,5 @@
 import { Queue } from 'taskcluster-client-web';
 import debounce from 'lodash/debounce';
-import delay from 'lodash/delay';
 import moment from 'moment';
 
 import {
@@ -67,38 +66,46 @@ const taskcluster = (() => {
     trailing: false,
   });
 
-  const getCredentials = (rootUrl) => {
-    const userCredentials = JSON.parse(localStorage.getItem('userCredentials'));
-    _rootUrl = checkRootUrl(rootUrl);
-
-    if (
-      userCredentials &&
-      userCredentials[_rootUrl] &&
-      moment(userCredentials[_rootUrl].expires).isAfter(moment())
-    ) {
-      return userCredentials[_rootUrl];
-    }
-
-    getDebouncedAuthCode();
-    return delay(() => {
+  const getCredentials = (rootUrl) =>
+    new Promise((resolve) => {
       const userCredentials = JSON.parse(
         localStorage.getItem('userCredentials'),
       );
-      return userCredentials && userCredentials[_rootUrl]
-        ? userCredentials[_rootUrl]
-        : null;
-    }, 2000);
-  };
+      _rootUrl = checkRootUrl(rootUrl);
 
-  const getMockCredentials = () => ({
-    clientId: 'test client',
-    accessToken: '123fgt',
-  });
+      if (
+        userCredentials &&
+        userCredentials[_rootUrl] &&
+        moment(userCredentials[_rootUrl].expires).isAfter(moment())
+      ) {
+        return resolve(userCredentials[_rootUrl]);
+      }
 
-  const getQueue = (rootUrl, testMode = false) => {
-    const userCredentials = testMode
+      getDebouncedAuthCode();
+      setTimeout(() => {
+        const userCredentials = JSON.parse(
+          localStorage.getItem('userCredentials'),
+        );
+
+        return resolve(
+          userCredentials && userCredentials[_rootUrl]
+            ? userCredentials[_rootUrl]
+            : null,
+        );
+      }, 5000);
+    });
+
+  const getMockCredentials = () =>
+    Promise.resolve({
+      clientId: 'test client',
+      accessToken: '123fgt',
+    });
+
+  const getQueue = async (rootUrl, testMode = false) => {
+    const userCredentials = await (testMode
       ? getMockCredentials()
-      : getCredentials(rootUrl);
+      : getCredentials(rootUrl));
+
     if (!userCredentials) {
       throw Error(tcCredentialsMessage);
     }
